@@ -7,7 +7,6 @@
 //
 
 #import "ViewController.h"
-//#import "UIButton.h"
 #define KBase_tag     100
 #define kScreenWidth   [UIScreen mainScreen].bounds.size.width
 #define kScreenHeight  [UIScreen mainScreen].bounds.size.height
@@ -15,8 +14,8 @@
 
 @interface ViewController (){
     NSInteger totalNumer;
-    CGPoint nextPoint;
-    CGPoint valuePoint;
+    CGPoint nextPoint;//下一个按钮的位置
+    CGPoint valuePoint;//记录移动按钮的位置
 }
 
 @end
@@ -103,25 +102,27 @@
 
 - (void)longPress:(UIGestureRecognizer *)recongize{
     UIButton *btn = (UIButton *)recongize.view;
-    
     for (UIButton *btn1 in self.view.subviews) {
         if (btn1 != btn) {
+            //禁用没被选中按钮的手势
             btn1.userInteractionEnabled = NO;
         }
     }
+    //取得手势的位置
     CGPoint touchPoint = [recongize locationInView:self.view];
     if (recongize.state == UIGestureRecognizerStateBegan) {
+        //开始移动
         [UIView animateWithDuration:0.2 animations:^{
             btn.transform = CGAffineTransformMakeScale(1.3, 1.3);
             btn.alpha = 0.7;
+            //把选中按钮放到最前面
             [self.view bringSubviewToFront:btn];
             valuePoint = btn.center;
-
         }];
-    }else if (recongize.state == UIGestureRecognizerStateChanged){
-        //移动view
+    }else if (recongize.state == UIGestureRecognizerStateChanged){//移动view
         btn.center = touchPoint;
         for (UIButton *btn2 in self.view.subviews) {
+            //遍历按钮 如果某一个按钮frame包含移动的按钮
             if (CGRectContainsPoint(btn2.frame, touchPoint)&&btn2 != btn) {
                 //开始按钮索引
                 NSInteger startIndex = btn.tag - KBase_tag;
@@ -131,19 +132,23 @@
                 if (endIndex > startIndex) {//往后移
                     [UIView animateWithDuration:0.2 animations:^{
                         for (NSInteger i = startIndex+1; i<=endIndex; i++) {
+                            //取出后面的每一个按钮
                             UIButton *button = (UIButton *)[self.view viewWithTag:i+KBase_tag];
+                            //记录下一个按钮的中心位置
                             nextPoint = button.center;
+                            //移动下一个按钮到上一个位置
                             button.center = valuePoint;
+                            //把下一个按钮的位置保存成当前按钮位置
                             valuePoint = nextPoint;
+                            //tag减少
                             button.tag--;
+                            //修改title
                             [button setTitle:[NSString stringWithFormat:@"第%ld",button.tag] forState:UIControlStateNormal];
                         }
                         btn.tag = endIndex + KBase_tag;
                         [btn setTitle:[NSString stringWithFormat:@"第%ld",btn.tag] forState:UIControlStateNormal];
                     }];
-                   
-                    
-                }else {//往前移
+            }else {//往前移
                 
                     [UIView animateWithDuration:0.2 animations:^{
                         for (NSInteger i = startIndex-1; i>=endIndex; i--) {
@@ -157,12 +162,11 @@
                         btn.tag = endIndex+KBase_tag;
                         [btn setTitle:[NSString stringWithFormat:@"第%ld",btn.tag] forState:UIControlStateNormal];
                     }];
-                    
                 }
             }
         }
-    
     }else if (recongize.state == UIGestureRecognizerStateEnded){
+        //移动结束
         for (UIButton * bt in self.view.subviews) {
             if (bt!=btn) {
                 bt.userInteractionEnabled = YES;
@@ -172,11 +176,9 @@
         [UIView animateWithDuration:0.2 animations:^{
             btn.transform = CGAffineTransformMakeScale(1.0, 1.0);
             btn.alpha = 1;
-            
             btn.center = valuePoint;
         }];
     }
-    
 }
 
 - (void)didReceiveMemoryWarning {
